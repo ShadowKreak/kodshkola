@@ -1,6 +1,4 @@
 Flask>=3.0
 Markdown>=3.5
-# для production-запуска (опционально):
-# gunicorn>=21.2
-# База часовых поясов для Windows (ZoneInfo).
+gunicorn>=21.2
 tzdata>=2024.1; platform_system == "Windows"
