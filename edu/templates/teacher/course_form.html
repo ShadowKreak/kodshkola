@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% from "_m.html" import csrf, cover with context %}
+{% block title %}{{ 'Параметры курса' if course else 'Новый курс' }}{% endblock %}
+{% block content %}
+<div class="crumbs"><a href="{{ url_for('teacher.courses') }}">Мои курсы</a> / <span>{{ course.title if course else 'Новый курс' }}</span></div>
+<div class="page-head"><div><h1>{{ 'Параметры курса' if course else 'Новый курс' }}</h1></div></div>
+<form class="card" method="post" enctype="multipart/form-data" style="max-width:820px">
+  {{ csrf() }}
+  <div class="field"><label for="title">Название курса</label>
+    <input id="title" name="title" type="text" value="{{ form.title }}" maxlength="120" required></div>
+  <div class="field"><label for="description">Описание</label>
+    <textarea id="description" name="description" rows="5" maxlength="4000" placeholder="О чём курс, чему научится студент">{{ form.description }}</textarea></div>
+  <div class="row">
+    <div class="field"><label for="level">Уровень сложности</label>
+      <select id="level" name="level">{% for k, v in LEVELS.items() %}<option value="{{ k }}" {{ 'selected' if form.level == k }}>{{ v }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="category_id">Категория</label>
+      <select id="category_id" name="category_id"><option value="">Без категории</option>
+        {% for c in categories %}<option value="{{ c.id }}" {{ 'selected' if form.category_id == c.id }}>{{ c.name }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="new_category">Или новая категория</label>
+      <input id="new_category" name="new_category" type="text" maxlength="40" value="{{ form.new_category or '' }}" placeholder="Например, Базы данных"></div>
+  </div>
+  <div class="field">
+    <label for="cover">Обложка</label>
+    {% if course and course.cover_path %}
+      <div style="max-width:320px;margin-bottom:10px;border-radius:12px;overflow:hidden">{% call cover(course) %}{% endcall %}</div>
+      <label class="check"><input type="checkbox" name="remove_cover" value="1"> Удалить текущую обложку</label>
+    {% endif %}
+    <input id="cover" name="cover" type="file" accept="image/png,image/jpeg,image/webp">
+    <div class="hint">PNG, JPG или WEBP до 2 МБ. Без обложки курс получит цветной фон.</div>
+  </div>
+  <div class="form-actions">
+    <button class="btn" type="submit">{{ 'Сохранить' if course else 'Создать курс' }}</button>
+    <a class="btn btn-ghost" href="{{ url_for('teacher.course_manage', course_id=course.id) if course else url_for('teacher.courses') }}">Отмена</a>
+  </div>
+</form>
+{% endblock %}

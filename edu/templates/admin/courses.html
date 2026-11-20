@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "_m.html" import post_button, empty with context %}
+{% block title %}Курсы платформы{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Курсы платформы</h1><p class="sub">Публикация и удаление курсов всех преподавателей.</p></div></div>
+<div class="card flush">
+{% if courses %}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Курс</th><th>Преподаватель</th><th>Категория</th><th class="num">Уроки</th><th class="num">Студенты</th><th>Статус</th><th>Действия</th></tr></thead>
+    <tbody>
+    {% for c in courses %}
+      <tr>
+        <td><b>{{ c.title }}</b><div class="small muted">{{ LEVELS[c.level] }}</div></td>
+        <td>{{ c.teacher_name }}</td>
+        <td>{{ c.category_name or '—' }}</td>
+        <td class="num">{{ c.lessons_count }}</td>
+        <td class="num">{{ c.students }}</td>
+        <td><span class="badge {{ 'checked' if c.is_published else '' }}">{{ 'Опубликован' if c.is_published else 'Скрыт' }}</span></td>
+        <td><div class="item-actions">
+          {{ post_button(url_for('admin.course_toggle', course_id=c.id), 'Скрыть' if c.is_published else 'Опубликовать') }}
+          {{ post_button(url_for('admin.course_delete', course_id=c.id), 'Удалить', 'btn btn-danger-ghost btn-sm', confirm='Удалить курс «' ~ c.title ~ '» со всеми уроками и работами студентов?') }}
+        </div></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+{% else %}{{ empty('Курсов пока нет', 'Они появятся, когда преподаватели создадут первые курсы.') }}{% endif %}
+</div>
+{% endblock %}

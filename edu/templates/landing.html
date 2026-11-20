@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="KodShkola — платформа для изучения программирования: текстовые уроки, примеры кода, практика и проверка преподавателем.">
+  <title>KodShkola — учитесь программировать на практике</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body class="landing-page">
+{% from "_m.html" import icon, course_card, code_view, badge with context %}
+<header class="land-nav">
+  <div class="land-wrap">
+    <a class="brand" href="{{ url_for('main.index') }}"><span class="brand-mark">&lt;/&gt;</span> KodShkola</a>
+    <nav class="land-links" aria-label="Разделы страницы">
+      <a href="#courses">Курсы</a><a href="#flow">Как проверяются задания</a><a href="#roles">Роли</a>
+    </nav>
+    <div class="land-actions">
+      <a class="btn btn-ghost btn-sm" href="{{ url_for('auth.login') }}">Войти</a>
+      <a class="btn btn-sm" href="{{ url_for('auth.register') }}">Регистрация</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="land-hero">
+    <div class="land-wrap">
+      <div>
+        <h1>Программирование без видео: теория, код и проверка преподавателем</h1>
+        <p class="land-lead">Читайте уроки в своём темпе, разбирайте примеры кода, выполняйте задания и получайте оценку с комментарием. Прогресс сохраняется, и обучение можно продолжить с того места, где остановились.</p>
+        <div class="land-cta">
+          <a class="btn btn-large" href="{{ url_for('auth.register') }}">Начать обучение</a>
+          <a class="btn btn-ghost btn-large" href="#courses">Смотреть курсы</a>
+        </div>
+        <dl class="land-facts">
+          <div><dt>{{ stats.courses }}</dt><dd>{{ stats.courses|plural('курс', 'курса', 'курсов') }}</dd></div>
+          <div><dt>{{ stats.lessons }}</dt><dd>{{ stats.lessons|plural('урок', 'урока', 'уроков') }}</dd></div>
+          <div><dt>{{ stats.teachers }}</dt><dd>{{ stats.teachers|plural('преподаватель', 'преподавателя', 'преподавателей') }}</dd></div>
+          <div><dt>{{ stats.students }}</dt><dd>{{ stats.students|plural('ученик', 'ученика', 'учеников') }}</dd></div>
+        </dl>
+      </div>
+
+      <div class="land-lesson" aria-label="Пример урока">
+        {% if demo %}
+          <div class="land-lesson-meta">{{ demo.course_title }}</div>
+          <h2>{{ demo.lesson_title }}</h2>
+          <p>Так выглядит пример кода в уроке: его можно прочитать, скопировать и повторить самостоятельно.</p>
+          {{ code_view(demo.code, demo.language, demo.example_title) }}
+        {% else %}
+          <div class="land-lesson-meta">Пример урока</div>
+          <h2>Условия в Python</h2>
+          <p>Так выглядит пример кода в уроке: его можно прочитать, скопировать и повторить самостоятельно.</p>
+          {{ code_view('age = 18\nif age >= 18:\n    print("Доступ разрешён")\nelse:\n    print("Доступ закрыт")', 'python', 'Условие if') }}
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <section class="land-section" id="courses">
+    <div class="land-wrap">
+      <div class="land-section-head">
+        <h2>Курсы</h2>
+        <p>Каждый курс состоит из разделов с уроками и практическими заданиями. Запишитесь на курс после регистрации.</p>
+      </div>
+      {% if courses %}
+        <div class="grid grid-3">
+          {% for c in courses %}{{ course_card(c, url_for('auth.register')) }}{% endfor %}
+        </div>
+      {% else %}
+        <div class="card"><div class="empty"><b>Курсы скоро появятся</b>Преподаватели готовят учебные программы. Загляните позже.</div></div>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="land-section" id="flow">
+    <div class="land-wrap">
+      <div class="land-section-head">
+        <h2>Как проверяются задания</h2>
+        <p>Проверяет живой преподаватель, а не автоматика. Любая работа проходит один и тот же путь, и на каждом шаге ученик видит статус.</p>
+      </div>
+      <ol class="flow">
+        <li>{{ badge('not_started') }}<p>Вы прочитали условие и готовите решение.</p></li>
+        <li>{{ badge('review') }}<p>Решение отправлено, преподаватель получил уведомление.</p></li>
+        <li>{{ badge('revision') }}<p>Преподаватель оставил комментарий. Исправьте работу и отправьте снова.</p></li>
+        <li>{{ badge('checked') }}<p>Работа принята: оценка от 1 до 10 попадает в вашу успеваемость.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="land-section" id="roles">
+    <div class="land-wrap">
+      <div class="land-section-head"><h2>Три роли на платформе</h2></div>
+      <dl class="roles">
+        <div><dt>Ученик</dt><dd>Выбирает курс в каталоге, читает уроки, отмечает изученное, сдаёт задания и следит за оценками и процентом прохождения.</dd></div>
+        <div><dt>Преподаватель</dt><dd>Создаёт курсы, разделы, уроки с примерами кода и задания, проверяет работы, ставит оценки и пишет комментарии.</dd></div>
+        <div><dt>Администратор</dt><dd>Управляет пользователями, ролями, курсами и категориями, видит общую статистику платформы.</dd></div>
+      </dl>
+    </div>
+  </section>
+</main>
+
+<footer class="land-footer">
+  <div class="land-wrap">
+    <a class="brand" href="{{ url_for('main.index') }}"><span class="brand-mark">&lt;/&gt;</span> KodShkola</a>
+    <span>Образовательная платформа для изучения программирования</span>
+    <nav aria-label="Вход"><a href="{{ url_for('auth.login') }}">Войти</a><a href="{{ url_for('auth.register') }}">Регистрация</a></nav>
+  </div>
+</footer>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

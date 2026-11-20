@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% from "_m.html" import icon, code_view, csrf with context %}
+{% block title %}{{ lesson.title }}{% endblock %}
+{% block content %}
+<div class="crumbs">
+  <a href="{{ url_for('student.my_courses') }}">Мои курсы</a> /
+  <a href="{{ url_for('student.course', course_id=course.id) }}">{{ course.title }}</a> /
+  <span>{{ lesson.section_title }}</span>
+</div>
+<div class="lesson-layout">
+  <article class="card lesson-article">
+    <h1>{{ lesson.title }}</h1>
+    <p class="lesson-intro">Урок {{ position }} из {{ ordered|length }}, раздел «{{ lesson.section_title }}»</p>
+    <div class="prose">{{ lesson.content_md|md or '<p class="muted">Текст урока пока не добавлен.</p>'|safe }}</div>
+
+    {% if examples %}
+    <h2 style="margin-top:1.8em">Примеры кода</h2>
+    {% for ex in examples %}
+      <div class="prose" style="max-width:none">
+        <h3 style="margin-bottom:0">{{ ex.title }}</h3>
+        {{ code_view(ex.code, ex.language, ex.title) }}
+      </div>
+    {% endfor %}
+    {% endif %}
+
+    <form method="post" action="{{ url_for('student.lesson_complete', lesson_id=lesson.id) }}" class="lesson-nav">
+      {{ csrf() }}
+      {% if done %}
+        <input type="hidden" name="undo" value="1">
+        <span class="badge checked">Урок изучен</span>
+        <button class="btn btn-ghost" type="submit">Снять отметку</button>
+      {% else %}
+        {% if next_l %}<input type="hidden" name="next" value="{{ next_l.id }}">{% endif %}
+        <button class="btn btn-ok" type="submit">{{ 'Изучено, к следующему уроку' if next_l else 'Отметить как изученный' }}</button>
+      {% endif %}
+    </form>
+    <div class="lesson-nav" style="border:0;margin-top:10px;padding-top:0">
+      {% if prev_l %}<a class="btn btn-ghost" href="{{ url_for('student.lesson', lesson_id=prev_l.id) }}">Назад: {{ prev_l.title }}</a>{% else %}<span></span>{% endif %}
+      {% if next_l %}<a class="btn btn-ghost" href="{{ url_for('student.lesson', lesson_id=next_l.id) }}">Далее: {{ next_l.title }}</a>{% endif %}
+    </div>
+  </article>
+
+  <aside class="card toc">
+    <h3>Содержание курса</h3>
+    {% for l in ordered %}
+      <a href="{{ url_for('student.lesson', lesson_id=l.id) }}" class="{{ 'current' if l.id == lesson.id }}">
+        {{ l.title }}</a>
+    {% endfor %}
+  </aside>
+</div>
+{% endblock %}

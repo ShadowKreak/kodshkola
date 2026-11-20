@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{% block title %}Вход{% endblock %} — KodShkola</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body>
+{% from "_m.html" import flashes, csrf, code_view with context %}
+<div class="auth">
+  <section class="auth-aside">
+    <a class="brand" href="{{ url_for('main.index') }}" style="padding:0"><span class="brand-mark">&lt;/&gt;</span> KodShkola</a>
+    <div>
+      <h2>Учитесь программировать на практике</h2>
+      <p>Читайте уроки, разбирайте примеры кода, выполняйте задания и получайте оценки с комментариями от преподавателей.</p>
+      {{ code_view('def solve(tasks):\n    done = 0\n    for task in tasks:\n        if task.checked:\n            done += 1\n    return done / len(tasks) * 100', 'python', 'progress.py') }}
+    </div>
+    <span class="muted" style="color:#8f9cc0">Без видео: текст, код, практика и обратная связь.</span>
+  </section>
+  <section class="auth-main">
+    <div class="auth-card">
+      {{ flashes() }}
+      {% block content %}{% endblock %}
+    </div>
+  </section>
+</div>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

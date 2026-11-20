@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% from "_m.html" import csrf, code_view, post_button with context %}
+{% from "_editor.html" import md_editor with context %}
+{% block title %}{{ 'Редактирование урока' if lesson else 'Новый урок' }}{% endblock %}
+{% block content %}
+<div class="crumbs">
+  <a href="{{ url_for('teacher.courses') }}">Мои курсы</a> /
+  <a href="{{ url_for('teacher.course_manage', course_id=course_id) }}">Структура курса</a> /
+  <span>{{ section.title }}</span>
+</div>
+<div class="page-head">
+  <div><h1>{{ 'Редактирование урока' if lesson else 'Новый урок' }}</h1><p class="sub">Раздел: {{ section.title }}</p></div>
+</div>
+
+<form method="post" class="stack">
+  {{ csrf() }}
+  <section class="card">
+    <div class="field"><label for="title">Название урока</label>
+      <input id="title" name="title" type="text" value="{{ form.title }}" maxlength="160" required></div>
+    {{ md_editor('content_md', form.content_md, 'Текст урока') }}
+    <div class="form-actions">
+      <button class="btn" type="submit">{{ 'Сохранить урок' if lesson else 'Создать урок' }}</button>
+      <a class="btn btn-ghost" href="{{ url_for('teacher.course_manage', course_id=course_id) }}">К структуре курса</a>
+    </div>
+  </section>
+</form>
+
+<section class="card" id="examples" style="margin-top:18px">
+  <div class="card-head"><h2>Примеры кода</h2></div>
+  {% if not lesson %}
+    <p class="muted">Сначала создайте урок — после этого здесь можно добавлять примеры кода.</p>
+  {% else %}
+    <div class="stack">
+    {% for ex in examples %}
+      <details class="card" style="padding:14px 16px">
+        <summary style="cursor:pointer;font-weight:600">{{ ex.title }} <span class="badge level plain" style="margin-left:6px">{{ LANGS[ex.language] }}</span></summary>
+        <form method="post" action="{{ url_for('teacher.example_update', example_id=ex.id) }}" style="margin-top:14px">
+          {{ csrf() }}
+          <div class="row">
+            <div class="field"><label for="et{{ ex.id }}">Название</label><input id="et{{ ex.id }}" name="title" type="text" value="{{ ex.title }}" maxlength="120" required></div>
+            <div class="field"><label for="el{{ ex.id }}">Язык</label><select id="el{{ ex.id }}" name="language">{% for k, v in LANGS.items() %}<option value="{{ k }}" {{ 'selected' if ex.language == k }}>{{ v }}</option>{% endfor %}</select></div>
+          </div>
+          <div class="field"><label for="ec{{ ex.id }}">Код</label><textarea id="ec{{ ex.id }}" name="code" class="code" rows="8" spellcheck="false" required>{{ ex.code }}</textarea></div>
+          <button class="btn btn-sm" type="submit">Сохранить пример</button>
+        </form>
+        <div style="margin-top:10px">{{ post_button(url_for('teacher.example_delete', example_id=ex.id), 'Удалить пример', 'btn btn-danger-ghost btn-sm', confirm='Удалить пример кода?') }}</div>
+      </details>
+    {% else %}
+      <p class="muted" style="margin:0">Примеров пока нет. Добавьте первый ниже.</p>
+    {% endfor %}
+    </div>
+
+    <form method="post" action="{{ url_for('teacher.example_add', lesson_id=lesson.id) }}" style="margin-top:20px;padding-top:20px;border-top:1px solid var(--line)">
+      {{ csrf() }}
+      <h3>Добавить пример</h3>
+      <div class="row">
+        <div class="field"><label for="new-ex-title">Название</label><input id="new-ex-title" name="title" type="text" maxlength="120" placeholder="Например, Цикл for" required></div>
+        <div class="field"><label for="new-ex-lang">Язык</label><select id="new-ex-lang" name="language">{% for k, v in LANGS.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></div>
+      </div>
+      <div class="field"><label for="new-ex-code">Код</label><textarea id="new-ex-code" name="code" class="code" rows="8" spellcheck="false" required placeholder="for i in range(3):&#10;    print(i)"></textarea></div>
+      <button class="btn" type="submit">Добавить пример</button>
+    </form>
+  {% endif %}
+</section>
+{% endblock %}

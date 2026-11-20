@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% from "_m.html" import stat, cover, badge, empty with context %}
+{% block title %}Главная{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Здравствуйте, {{ current_user['full_name'].split()[0] }}!</h1><p class="sub">Работы на проверку и состояние ваших курсов.</p></div>
+  <div class="actions"><a class="btn" href="{{ url_for('teacher.course_new') }}">Создать курс</a></div>
+</div>
+<div class="grid grid-stats">
+  {{ stat('book', totals.courses, 'курсов') }}
+  {{ stat('users', totals.students, 'студентов на курсах') }}
+  {{ stat('inbox', totals.pending, 'ждут проверки', 'warn') }}
+  {{ stat('check', totals.checked, 'работ проверено', 'ok') }}
+</div>
+
+<div class="split" style="margin-top:18px">
+  <div class="stack">
+    <section class="card flush">
+      <div class="card-head" style="padding:18px 20px 0"><h2>Очередь проверки</h2><a href="{{ url_for('teacher.reviews') }}">Все работы</a></div>
+      {% if queue %}
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th>Студент</th><th>Задание</th><th>Отправлено</th><th></th></tr></thead>
+        <tbody>
+        {% for s in queue %}
+          <tr>
+            <td><div class="person"><span class="avatar">{{ s.student_name|initials }}</span><div><b>{{ s.student_name }}</b></div></div></td>
+            <td>{{ s.assignment_title }}<div class="small muted">{{ s.course_title }}{% if s.attempt > 1 %} · попытка {{ s.attempt }}{% endif %}</div></td>
+            <td class="nowrap small">{{ s.submitted_at|dt }}</td>
+            <td><a class="btn btn-sm" href="{{ url_for('teacher.review', submission_id=s.id) }}">Проверить</a></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table></div>
+      {% else %}{{ empty('Всё проверено', 'Новых работ от студентов нет.') }}{% endif %}
+    </section>
+    <section class="card"><div class="card-head"><h2>Распределение оценок</h2></div>{{ chart }}</section>
+  </div>
+  <section class="card">
+    <div class="card-head"><h2>Мои курсы</h2><a href="{{ url_for('teacher.courses') }}">Все</a></div>
+    <ul class="list">
+      {% for c in courses[:6] %}
+      <li>
+        <div class="grow"><b><a href="{{ url_for('teacher.course_manage', course_id=c.id) }}">{{ c.title }}</a></b>
+          <span class="small muted">{{ c.students }} {{ c.students|plural('студент', 'студента', 'студентов') }}{% if c.pending %} · {{ c.pending }} на проверке{% endif %}</span></div>
+        <span class="badge {{ 'checked' if c.is_published else '' }}">{{ 'Опубликован' if c.is_published else 'Черновик' }}</span>
+      </li>
+      {% else %}<li class="muted">У вас пока нет курсов.</li>{% endfor %}
+    </ul>
+  </section>
+</div>
+{% endblock %}

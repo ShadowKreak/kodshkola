@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% from "_m.html" import csrf, post_button, empty with context %}
+{% block title %}Пользователи{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Пользователи</h1><p class="sub">Роли, блокировка и удаление аккаунтов.</p></div></div>
+<form class="filters filters-3" method="get">
+  <div class="field" style="margin:0"><label for="q">Поиск</label><input id="q" name="q" type="search" value="{{ q }}" placeholder="Имя или e-mail"></div>
+  <div class="field" style="margin:0"><label for="role">Роль</label>
+    <select id="role" name="role"><option value="">Все роли</option>
+      {% for k, v in ROLE_NAMES.items() %}<option value="{{ k }}" {{ 'selected' if role == k }}>{{ v }}</option>{% endfor %}</select></div>
+  <button class="btn" type="submit">Найти</button>
+</form>
+<div class="card flush">
+{% if users %}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Пользователь</th><th>Роль</th><th>Регистрация</th><th>Статус</th><th>Действия</th></tr></thead>
+    <tbody>
+    {% for u in users %}
+      <tr>
+        <td><div class="person"><span class="avatar">{{ u.full_name|initials }}</span><div><b>{{ u.full_name }}</b><span>{{ u.email }}</span></div></div></td>
+        <td>
+          {% if u.id == current_user['id'] %}<span class="badge level plain">{{ ROLE_NAMES[u.role] }} (вы)</span>
+          {% else %}
+          <form method="post" action="{{ url_for('admin.user_role', user_id=u.id) }}" style="display:flex;gap:6px">
+            {{ csrf() }}
+            <select name="role" aria-label="Роль пользователя {{ u.full_name }}" style="min-height:34px;padding:4px 8px;width:auto">
+              {% for k, v in ROLE_NAMES.items() %}<option value="{{ k }}" {{ 'selected' if u.role == k }}>{{ v }}</option>{% endfor %}
+            </select>
+            <button class="btn btn-ghost btn-sm" type="submit">Сменить</button>
+          </form>
+          {% endif %}
+        </td>
+        <td class="nowrap small">{{ u.created_at|dt }}</td>
+        <td>{% if u.is_blocked %}<span class="badge revision">Заблокирован</span>{% else %}<span class="badge checked">Активен</span>{% endif %}</td>
+        <td>
+          {% if u.id != current_user['id'] %}
+          <div class="item-actions">
+            {{ post_button(url_for('admin.user_block', user_id=u.id), 'Разблокировать' if u.is_blocked else 'Заблокировать') }}
+            {{ post_button(url_for('admin.user_delete', user_id=u.id), 'Удалить', 'btn btn-danger-ghost btn-sm', confirm='Удалить пользователя ' ~ u.full_name ~ ' и все его данные?') }}
+          </div>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+{% else %}{{ empty('Никого не найдено', 'Измените поисковый запрос.') }}{% endif %}
+</div>
+{% endblock %}

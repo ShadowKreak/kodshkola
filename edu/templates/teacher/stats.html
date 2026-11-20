@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% from "_m.html" import stat, bar, badge with context %}
+{% block title %}Статистика курса{% endblock %}
+{% block content %}
+<div class="crumbs"><a href="{{ url_for('teacher.course_manage', course_id=course.id) }}">{{ course.title }}</a> / <span>Статистика</span></div>
+<div class="page-head"><div><h1>Статистика курса</h1><p class="sub">{{ course.title }}</p></div>
+  <div class="actions"><a class="btn btn-ghost" href="{{ url_for('teacher.course_students', course_id=course.id) }}">Список студентов</a></div></div>
+
+<div class="grid grid-stats">
+  {{ stat('users', stats.count, 'студентов') }}
+  {{ stat('chart', stats.avg_percent ~ '%', 'средний прогресс', 'ok') }}
+  {{ stat('star', stats.avg_score if stats.avg_score is not none else '—', 'средняя оценка') }}
+  {{ stat('task', stats.graded, 'работ оценено') }}
+  {{ stat('inbox', stats.pending, 'ждут проверки', 'warn') }}
+</div>
+
+<div class="grid grid-2" style="margin-top:18px">
+  <section class="card"><div class="card-head"><h2>Распределение оценок</h2></div>{{ chart }}</section>
+  <section class="card flush">
+    <div class="card-head" style="padding:18px 20px 0"><h2>По заданиям</h2></div>
+    <div class="table-wrap"><table class="table">
+      <thead><tr><th>Задание</th><th class="num">Проверено</th><th class="num">На проверке</th><th class="num">Исправить</th><th class="num">Ср. оценка</th></tr></thead>
+      <tbody>
+      {% for a in per_assignment %}
+        <tr><td>{{ a.title }}</td><td class="num">{{ a.checked }}</td><td class="num">{{ a.review }}</td><td class="num">{{ a.revision }}</td>
+          <td class="num">{{ a.avg_score if a.avg_score is not none else '—' }}</td></tr>
+      {% else %}<tr><td colspan="5" class="muted">В курсе нет заданий.</td></tr>{% endfor %}
+      </tbody>
+    </table></div>
+  </section>
+</div>
+
+<section class="card flush" style="margin-top:18px">
+  <div class="card-head" style="padding:18px 20px 0"><h2>Успеваемость студентов</h2></div>
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Студент</th><th style="min-width:160px">Прогресс</th><th class="num">Ср. оценка</th><th class="num">На проверке</th><th></th></tr></thead>
+    <tbody>
+    {% for s in stats.students %}
+      <tr>
+        <td><div class="person"><span class="avatar">{{ s.user.full_name|initials }}</span><div><b>{{ s.user.full_name }}</b></div></div></td>
+        <td><div class="progress-row">{{ bar(s.progress.percent) }}<b>{{ s.progress.percent }}%</b></div></td>
+        <td class="num">{{ s.progress.avg_score if s.progress.avg_score is not none else '—' }}</td>
+        <td class="num">{{ s.progress.on_review or '—' }}</td>
+        <td><a class="btn btn-ghost btn-sm" href="{{ url_for('teacher.student_detail', course_id=course.id, student_id=s.user.id) }}">Подробнее</a></td>
+      </tr>
+    {% else %}<tr><td colspan="5" class="muted">На курс ещё никто не записан.</td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+</section>
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% from "_m.html" import stat, bar, badge, score, empty, cover with context %}
+{% block title %}Главная{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Здравствуйте, {{ current_user['full_name'].split()[0] }}!</h1>
+  <p class="sub">Ваш прогресс по курсам и ближайшие задания.</p></div>
+  <div class="actions"><a class="btn" href="{{ url_for('student.catalog') }}">Найти курс</a></div>
+</div>
+
+{% if continue_item %}
+<section class="continue-strip">
+  <div>
+    <div class="small muted">Продолжить обучение</div>
+    <h2>{{ continue_item.course.title }}</h2>
+    <div class="small">{{ continue_item.next_step.label }}: {{ continue_item.next_step.title }}</div>
+  </div>
+  <div class="continue-strip-side">
+    <div class="progress-row">{{ bar(continue_item.progress.percent) }}<b>{{ continue_item.progress.percent }}%</b></div>
+    <a class="btn" href="{{ step_url(continue_item.next_step) }}">{{ continue_item.next_step.label }}</a>
+  </div>
+</section>
+{% endif %}
+
+<div class="grid grid-stats">
+  {{ stat('book', ov['items']|length, 'курсов в обучении') }}
+  {{ stat('check', ov.totals.lessons, 'уроков изучено', 'ok') }}
+  {{ stat('star', ov.totals.avg if ov.totals.avg is not none else '—', 'средняя оценка') }}
+  {{ stat('clock', ov.totals.review, 'работ на проверке', 'warn') }}
+  {{ stat('alert', ov.totals.revision, 'требуют исправления', 'bad') }}
+</div>
+
+<div class="split" style="margin-top:18px">
+  <div class="stack">
+    <section class="card">
+      <div class="card-head"><h2>Мои курсы</h2><a href="{{ url_for('student.my_courses') }}">Все курсы</a></div>
+      {% if ov['items'] %}
+      <ul class="list">
+        {% for it in ov['items'][:4] %}
+        <li>
+          <div class="grow">
+            <b><a href="{{ url_for('student.course', course_id=it.course.id) }}">{{ it.course.title }}</a></b>
+            <div class="progress-row" style="margin-top:6px">{{ bar(it.progress.percent) }}<b>{{ it.progress.percent }}%</b></div>
+            <div class="small muted" style="margin-top:4px">Уроков {{ it.progress.lessons_done }}/{{ it.progress.lessons_total }} · Заданий {{ it.progress.assignments_done }}/{{ it.progress.assignments_total }}</div>
+            {% if it.next_step %}<a class="btn btn-sm btn-ghost continue-link" href="{{ step_url(it.next_step) }}">{{ it.next_step.label }}: {{ it.next_step.title }}</a>{% elif it.progress.on_review %}<span class="small muted continue-done">Работы на проверке у преподавателя</span>{% else %}<span class="small muted continue-done">Курс пройден</span>{% endif %}
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+        {{ empty('Вы пока не записаны на курсы', 'Откройте каталог и выберите первый курс.', url_for('student.catalog'), 'Открыть каталог') }}
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Динамика оценок</h2><a href="{{ url_for('student.grades') }}">Вся успеваемость</a></div>
+      {{ chart }}
+    </section>
+  </div>
+
+  <div class="stack">
+    <section class="card">
+      <div class="card-head"><h2>К выполнению</h2></div>
+      <ul class="list">
+        {% for t in todo %}
+        <li>
+          <div class="grow">
+            <b><a href="{{ url_for('student.assignment', assignment_id=t.a.id) }}">{{ t.a.title }}</a></b>
+            <span class="small muted">{{ t.course.title }}{% if t.a.due_date %} · срок {{ t.a.due_date|dateru }}{% endif %}</span>
+          </div>
+          {% if t.sub %}{{ badge('revision') }}{% elif t.a.due_date and overdue(t.a.due_date) %}<span class="badge revision plain">Просрочено</span>{% else %}{{ badge('not_started') }}{% endif %}
+        </li>
+        {% else %}
+        <li class="muted">Все задания сданы — отличная работа!</li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Последние отзывы</h2></div>
+      <ul class="list">
+        {% for r in recent %}
+        <li>
+          <div class="grow">
+            <b><a href="{{ url_for('student.assignment', assignment_id=r.assignment_id) }}">{{ r.assignment_title }}</a></b>
+            <span class="small muted">{{ r.course_title }} · {{ r.reviewed_at|dt }}</span>
+            {% if r.teacher_comment %}<div class="small answer-text" style="margin-top:4px">«{{ r.teacher_comment|truncate(110) }}»</div>{% endif %}
+          </div>
+          {% if r.status == 'checked' %}{{ score(r.score) }}{% else %}{{ badge('revision') }}{% endif %}
+        </li>
+        {% else %}
+        <li class="muted">Оценок и комментариев пока нет.</li>
+        {% endfor %}
+      </ul>
+    </section>
+  </div>
+</div>
+{% endblock %}

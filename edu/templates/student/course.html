@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% from "_m.html" import icon, badge, score, bar, cover, post_button with context %}
+{% block title %}{{ course.title }}{% endblock %}
+{% block content %}
+<div class="crumbs"><a href="{{ url_for('student.catalog') }}">Каталог</a> / <span>{{ course.title }}</span></div>
+
+<div class="card flush" style="margin-bottom:22px">
+  {% call cover(course, big=True) %}{% if course.category_name %}<span class="badge plain">{{ course.category_name }}</span>{% endif %}{% endcall %}
+  <div style="padding:22px; display:flex; gap:24px; flex-wrap:wrap; align-items:center; justify-content:space-between">
+    <div style="flex:1; min-width:260px">
+      <h1>{{ course.title }}</h1>
+      <div class="course-meta" style="margin-bottom:12px"><span>Преподаватель: {{ course.teacher_name }}</span><span class="badge level plain">{{ LEVELS[course.level] }}</span></div>
+      <p class="prose" style="margin:0">{{ course.description or 'Описание курса пока не добавлено.' }}</p>
+    </div>
+    {% if enrolled %}
+      <div style="display:flex; gap:18px; align-items:center">
+        <div class="ring" style="--p: {{ progress.percent }}"><div><span>{{ progress.percent }}%<small>пройдено</small></span></div></div>
+        <div class="small">
+          {% if next_step %}<a class="btn btn-sm" href="{{ step_url(next_step) }}">{{ next_step.label }}</a>{% elif progress.on_review %}<span class="badge review">Ожидает проверки</span>{% else %}<span class="badge checked">Курс пройден</span>{% endif %}
+          <div style="margin-top:8px">Уроков: <b>{{ progress.lessons_done }}/{{ progress.lessons_total }}</b></div>
+          <div>Заданий: <b>{{ progress.assignments_done }}/{{ progress.assignments_total }}</b></div>
+          <div>Средняя оценка: <b>{{ progress.avg_score if progress.avg_score is not none else '—' }}</b></div>
+          <div>На проверке: <b>{{ progress.on_review }}</b></div>
+        </div>
+      </div>
+    {% else %}
+      <form method="post" action="{{ url_for('student.enroll', course_id=course.id) }}">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <button class="btn" type="submit">Записаться на курс</button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+<h2>Программа курса</h2>
+<div class="stack">
+  {% for s in sections %}
+  <section class="section-block">
+    <div class="section-head"><h3>{{ s.title }}</h3>
+      <span class="small muted">{{ s.lessons|length }} {{ s.lessons|length|plural('урок', 'урока', 'уроков') }}{% if s.assignments %} · {{ s.assignments|length }} {{ s.assignments|length|plural('задание', 'задания', 'заданий') }}{% endif %}</span></div>
+    {% for l in s.lessons %}
+    <div class="item">
+      <span class="ico {{ 'ok' if enrolled and l.id in done }}">{{ icon('check' if enrolled and l.id in done else 'file') }}</span>
+      <div class="grow">{% if enrolled %}<a href="{{ url_for('student.lesson', lesson_id=l.id) }}">{{ l.title }}</a>{% else %}<span>{{ l.title }}</span>{% endif %}</div>
+      {% if enrolled and l.id in done %}<span class="small muted">Изучено</span>{% endif %}
+    </div>
+    {% endfor %}
+    {% for a in s.assignments %}
+      {% set sub = subs.get(a.id) if enrolled else None %}
+      <div class="item">
+        <span class="ico task">{{ icon('task') }}</span>
+        <div class="grow">{% if enrolled %}<a href="{{ url_for('student.assignment', assignment_id=a.id) }}">{{ a.title }}</a>{% else %}<span>{{ a.title }}</span>{% endif %}
+          {% if a.due_date %}<div class="small muted">Срок: {{ a.due_date|dateru }}</div>{% endif %}</div>
+        {% if enrolled %}{{ badge(sub.status if sub else 'not_started') }}{% if sub and sub.status == 'checked' %} {{ score(sub.score) }}{% endif %}{% endif %}
+      </div>
+    {% endfor %}
+    {% if not s.lessons and not s.assignments %}<div class="item muted">В разделе пока нет материалов.</div>{% endif %}
+  </section>
+  {% else %}
+  <div class="card muted">Преподаватель ещё не добавил разделы.</div>
+  {% endfor %}
+
+  {% if loose %}
+  <section class="section-block">
+    <div class="section-head"><h3>Итоговый проект и общие задания</h3></div>
+    {% for a in loose %}
+      {% set sub = subs.get(a.id) if enrolled else None %}
+      <div class="item">
+        <span class="ico task">{{ icon('star' if a.kind == 'final' else 'task') }}</span>
+        <div class="grow">{% if enrolled %}<a href="{{ url_for('student.assignment', assignment_id=a.id) }}">{{ a.title }}</a>{% else %}<span>{{ a.title }}</span>{% endif %}
+          {% if a.kind == 'final' %}<span class="badge level plain" style="margin-left:6px">Итоговый проект</span>{% endif %}
+          {% if a.due_date %}<div class="small muted">Срок: {{ a.due_date|dateru }}</div>{% endif %}</div>
+        {% if enrolled %}{{ badge(sub.status if sub else 'not_started') }}{% if sub and sub.status == 'checked' %} {{ score(sub.score) }}{% endif %}{% endif %}
+      </div>
+    {% endfor %}
+  </section>
+  {% endif %}
+</div>
+{% if not enrolled %}<p class="muted" style="margin-top:14px">Чтобы читать уроки и отправлять задания, запишитесь на курс.</p>{% endif %}
+{% endblock %}

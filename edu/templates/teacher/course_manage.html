@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% from "_m.html" import icon, post_button, csrf, stat with context %}
+{% block title %}{{ course.title }}{% endblock %}
+
+{% macro move_btns(kind, id) %}
+  {{ post_button(url_for('teacher.move', kind=kind, item_id=id), icon('up'), 'btn btn-ghost btn-sm icon-btn', fields={'dir': 'up'}, title='Выше') }}
+  {{ post_button(url_for('teacher.move', kind=kind, item_id=id), icon('down'), 'btn btn-ghost btn-sm icon-btn', fields={'dir': 'down'}, title='Ниже') }}
+{% endmacro %}
+
+{% macro assignment_row(a) %}
+<div class="item" id="assignment-{{ a.id }}">
+  <span class="ico task">{{ icon('star' if a.kind == 'final' else 'task') }}</span>
+  <div class="grow"><a href="{{ url_for('teacher.assignment_edit', assignment_id=a.id) }}">{{ a.title }}</a>
+    {% if a.kind == 'final' %}<span class="badge level plain" style="margin-left:6px">Итоговый проект</span>{% endif %}
+    <div class="small muted">{% if a.due_date %}Срок: {{ a.due_date|dateru }}{% else %}Без срока{% endif %}</div></div>
+  <div class="item-actions">
+    {{ move_btns('assignment', a.id) }}
+    <a class="btn btn-ghost btn-sm" href="{{ url_for('teacher.assignment_edit', assignment_id=a.id) }}">Изменить</a>
+    {{ post_button(url_for('teacher.assignment_delete', assignment_id=a.id), 'Удалить', 'btn btn-danger-ghost btn-sm', confirm='Удалить задание и все отправленные работы по нему?') }}
+  </div>
+</div>
+{% endmacro %}
+
+{% block content %}
+<div class="crumbs"><a href="{{ url_for('teacher.courses') }}">Мои курсы</a> / <span>{{ course.title }}</span></div>
+<div class="page-head">
+  <div><h1>{{ course.title }}</h1>
+    <p class="sub"><span class="badge {{ 'checked' if course.is_published else '' }}">{{ 'Опубликован в каталоге' if course.is_published else 'Черновик — студенты не видят курс' }}</span></p></div>
+  <div class="actions">
+    {{ post_button(url_for('teacher.course_publish', course_id=course.id), 'Скрыть из каталога' if course.is_published else 'Опубликовать', 'btn ' + ('btn-ghost' if course.is_published else 'btn-ok')) }}
+    <a class="btn btn-ghost" href="{{ url_for('teacher.course_edit', course_id=course.id) }}">Параметры</a>
+    <a class="btn btn-ghost" href="{{ url_for('teacher.course_students', course_id=course.id) }}">Студенты ({{ stats.count }})</a>
+    <a class="btn btn-ghost" href="{{ url_for('teacher.course_stats', course_id=course.id) }}">Статистика</a>
+  </div>
+</div>
+
+<div class="stack">
+  {% for s in sections %}
+  <section class="section-block" id="section-{{ s.id }}">
+    <div class="section-head">
+      <h3>{{ s.title }}</h3>
+      <div class="item-actions">
+        {{ move_btns('section', s.id) }}
+        <button class="btn btn-ghost btn-sm" type="button" data-toggle="rename-{{ s.id }}">Переименовать</button>
+        {{ post_button(url_for('teacher.section_delete', section_id=s.id), 'Удалить', 'btn btn-danger-ghost btn-sm', confirm='Удалить раздел вместе с уроками и заданиями?') }}
+      </div>
+      <form class="rename" id="rename-{{ s.id }}" method="post" action="{{ url_for('teacher.section_rename', section_id=s.id) }}">
+        {{ csrf() }}<input type="text" name="title" value="{{ s.title }}" maxlength="120" aria-label="Название раздела" required>
+        <button class="btn btn-sm" type="submit">Сохранить</button>
+      </form>
+    </div>
+    {% for l in s.lessons %}
+    <div class="item" id="lesson-{{ l.id }}">
+      <span class="ico">{{ icon('file') }}</span>
+      <div class="grow"><a href="{{ url_for('teacher.lesson_edit', lesson_id=l.id) }}">{{ l.title }}</a></div>
+      <div class="item-actions">
+        {{ move_btns('lesson', l.id) }}
+        <a class="btn btn-ghost btn-sm" href="{{ url_for('teacher.lesson_edit', lesson_id=l.id) }}">Редактировать</a>
+        {{ post_button(url_for('teacher.lesson_delete', lesson_id=l.id), 'Удалить', 'btn btn-danger-ghost btn-sm', confirm='Удалить урок вместе с примерами кода?') }}
+      </div>
+    </div>
+    {% endfor %}
+    {% for a in s.assignments %}{{ assignment_row(a) }}{% endfor %}
+    <div class="item">
+      <a class="btn btn-sm" href="{{ url_for('teacher.lesson_new', section_id=s.id) }}">+ Урок</a>
+      <a class="btn btn-ghost btn-sm" href="{{ url_for('teacher.assignment_new', course_id=course.id, section=s.id) }}">+ Задание</a>
+    </div>
+  </section>
+  {% else %}
+  <div class="card"><b>Курс пока пуст.</b> <span class="muted">Добавьте первый раздел — например, «Введение».</span></div>
+  {% endfor %}
+
+  <form class="card" method="post" action="{{ url_for('teacher.section_add', course_id=course.id) }}" style="display:flex;gap:10px;flex-wrap:wrap;align-items:end">
+    {{ csrf() }}
+    <div class="field" style="flex:1;min-width:220px;margin:0"><label for="new-section">Новый раздел</label>
+      <input id="new-section" name="title" type="text" maxlength="120" placeholder="Например, Переменные и типы данных" required></div>
+    <button class="btn" type="submit">Добавить раздел</button>
+  </form>
+
+  <section class="section-block">
+    <div class="section-head"><h3>Итоговый проект и общие задания</h3>
+      <a class="btn btn-sm" href="{{ url_for('teacher.assignment_new', course_id=course.id, kind='final') }}">+ Итоговый проект</a></div>
+    {% for a in loose %}{{ assignment_row(a) }}{% else %}<div class="item muted">Итоговый проект пока не добавлен.</div>{% endfor %}
+  </section>
+</div>
+{% endblock %}

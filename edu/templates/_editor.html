@@ -1,0 +1,36 @@
+{# Редактор Markdown с панелью форматирования и живым предпросмотром (логика — static/js/app.js) #}
+{% macro md_editor(name, value, label, rows=18) -%}
+<div class="field">
+  <label for="{{ name }}">{{ label }}</label>
+  <div class="editor" data-editor>
+    <div class="editor-bar" role="toolbar" aria-label="Форматирование">
+      <button type="button" data-act="bold" title="Жирный (Ctrl+B)"><b>Ж</b></button>
+      <button type="button" data-act="italic" title="Курсив (Ctrl+I)"><i>К</i></button>
+      <span class="sep"></span>
+      <button type="button" data-act="h2" title="Заголовок">H2</button>
+      <button type="button" data-act="h3" title="Подзаголовок">H3</button>
+      <span class="sep"></span>
+      <button type="button" data-act="ul" title="Маркированный список">• Список</button>
+      <button type="button" data-act="ol" title="Нумерованный список">1. Список</button>
+      <button type="button" data-act="quote" title="Цитата или заметка">Цитата</button>
+      <span class="sep"></span>
+      <button type="button" data-act="icode" title="Код в строке">Код</button>
+      <select data-code-lang aria-label="Язык блока кода" style="width:auto;min-height:34px;padding:4px 8px">
+        {% for k, v in LANGS.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}
+      </select>
+      <button type="button" data-act="code" title="Блок кода">Блок кода</button>
+      <button type="button" data-act="link" title="Ссылка">Ссылка</button>
+      <button type="button" data-act="table" title="Таблица">Таблица</button>
+      <span class="spacer"></span>
+      <button type="button" data-mode="write">Текст</button>
+      <button type="button" data-mode="split">Рядом</button>
+      <button type="button" data-mode="preview">Просмотр</button>
+    </div>
+    <div class="editor-panes">
+      <textarea id="{{ name }}" name="{{ name }}" rows="{{ rows }}" spellcheck="true" maxlength="60000">{{ value }}</textarea>
+      <div class="editor-preview prose" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="hint">Поддерживается Markdown: заголовки, списки, таблицы, цитаты и блоки кода с подсветкой.</div>
+</div>
+{%- endmacro %}

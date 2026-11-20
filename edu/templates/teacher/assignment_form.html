@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% from "_m.html" import csrf with context %}
+{% from "_editor.html" import md_editor with context %}
+{% block title %}{{ 'Редактирование задания' if assignment else 'Новое задание' }}{% endblock %}
+{% block content %}
+<div class="crumbs"><a href="{{ url_for('teacher.course_manage', course_id=course.id) }}">{{ course.title }}</a> / <span>Задание</span></div>
+<div class="page-head"><div><h1>{{ 'Редактирование задания' if assignment else 'Новое задание' }}</h1></div></div>
+<form method="post" class="card">
+  {{ csrf() }}
+  <div class="field"><label for="title">Название</label>
+    <input id="title" name="title" type="text" value="{{ form.title }}" maxlength="160" required></div>
+  <div class="row">
+    <div class="field"><label for="kind">Тип</label>
+      <select id="kind" name="kind">
+        <option value="practice" {{ 'selected' if form.kind != 'final' }}>Практическое задание</option>
+        <option value="final" {{ 'selected' if form.kind == 'final' }}>Итоговый проект</option>
+      </select></div>
+    <div class="field"><label for="section_id">Раздел</label>
+      <select id="section_id" name="section_id"><option value="">Вне разделов</option>
+        {% for s in sections %}<option value="{{ s.id }}" {{ 'selected' if form.section_id == s.id }}>{{ s.title }}</option>{% endfor %}</select>
+      <div class="hint">Итоговый проект всегда размещается отдельно от разделов.</div></div>
+    <div class="field"><label for="due_date">Срок выполнения</label>
+      <input id="due_date" name="due_date" type="date" value="{{ form.due_date or '' }}"></div>
+  </div>
+  {{ md_editor('description_md', form.description_md, 'Условие задания', rows=14) }}
+  <div class="form-actions">
+    <button class="btn" type="submit">Сохранить задание</button>
+    <a class="btn btn-ghost" href="{{ url_for('teacher.course_manage', course_id=course.id) }}">Отмена</a>
+  </div>
+</form>
+{% endblock %}

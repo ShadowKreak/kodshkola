@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% from "_m.html" import course_card, empty with context %}
+{% block title %}Каталог курсов{% endblock %}
+{% block content %}
+<div class="page-head catalog-heading"><div><h1>Каталог курсов</h1><p class="sub">Выберите курс и запишитесь на него.</p></div><div class="catalog-count"><b>{{ courses|length }}</b><span>доступно курсов</span></div></div>
+
+<form class="filters" method="get" action="{{ url_for('student.catalog') }}">
+  <div class="field" style="margin:0"><label for="q">Поиск по названию</label>
+    <input id="q" type="search" name="q" value="{{ q }}" placeholder="Например, Python"></div>
+  <div class="field" style="margin:0"><label for="category">Категория</label>
+    <select id="category" name="category">
+      <option value="">Все категории</option>
+      {% for c in categories %}<option value="{{ c.id }}" {{ 'selected' if cat == c.id }}>{{ c.name }}</option>{% endfor %}
+    </select></div>
+  <div class="field" style="margin:0"><label for="level">Уровень</label>
+    <select id="level" name="level">
+      <option value="">Любой уровень</option>
+      {% for k, v in LEVELS.items() %}<option value="{{ k }}" {{ 'selected' if level == k }}>{{ v }}</option>{% endfor %}
+    </select></div>
+  <div style="display:flex;gap:8px"><button class="btn" type="submit">Найти</button>
+    {% if q or cat or level %}<a class="btn btn-ghost" href="{{ url_for('student.catalog') }}">Сбросить</a>{% endif %}</div>
+</form>
+
+{% if courses %}
+<div class="grid grid-3">
+  {% for c in courses %}
+    {% set foot %}
+      <span class="small muted">{{ c.students }} {{ c.students|plural('студент', 'студента', 'студентов') }}</span>
+      {% if c.enrolled %}<a class="btn btn-ghost btn-sm" href="{{ url_for('student.course', course_id=c.id) }}">Продолжить</a>
+      {% else %}<a class="btn btn-sm" href="{{ url_for('student.course', course_id=c.id) }}">Подробнее</a>{% endif %}
+    {% endset %}
+    {{ course_card(c, url_for('student.course', course_id=c.id), extra=foot) }}
+  {% endfor %}
+</div>
+{% else %}
+<div class="card">{{ empty('Курсы не найдены', 'Измените запрос или сбросьте фильтры.') }}</div>
+{% endif %}
+{% endblock %}

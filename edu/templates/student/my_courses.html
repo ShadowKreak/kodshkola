@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% from "_m.html" import course_card, empty with context %}
+{% block title %}Мои курсы{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Мои курсы</h1><p class="sub">Курсы, на которые вы записаны.</p></div>
+  <div class="actions"><a class="btn btn-ghost" href="{{ url_for('student.catalog') }}">Каталог курсов</a></div></div>
+{% if ov['items'] %}
+<div class="grid grid-3">
+  {% for it in ov['items'] %}
+    {% set foot %}
+      <span class="small muted">Оценка: {{ it.progress.avg_score if it.progress.avg_score is not none else '—' }}</span>
+      {% if it.next_step %}<a class="btn btn-sm" href="{{ step_url(it.next_step) }}">{{ it.next_step.label }}</a>{% else %}<a class="btn btn-sm btn-ghost" href="{{ url_for('student.course', course_id=it.course.id) }}">Открыть курс</a>{% endif %}
+    {% endset %}
+    {{ course_card(it.course, url_for('student.course', course_id=it.course.id), progress=it.progress, extra=foot) }}
+  {% endfor %}
+</div>
+{% else %}
+<div class="card">{{ empty('Вы пока не записаны на курсы', 'Найдите подходящий курс в каталоге.', url_for('student.catalog'), 'Открыть каталог') }}</div>
+{% endif %}
+{% endblock %}

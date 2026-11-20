@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% from "_m.html" import stat, icon with context %}
+{% block title %}Обзор платформы{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Обзор платформы</h1><p class="sub">Пользователи, курсы и активность.</p></div></div>
+<div class="grid grid-stats">
+  {{ stat('users', stats.students, 'студентов') }}
+  {{ stat('user', stats.teachers, 'преподавателей') }}
+  {{ stat('shield', stats.admins, 'администраторов') }}
+  {{ stat('book', stats.published ~ '/' ~ stats.courses, 'курсов опубликовано', 'ok') }}
+  {{ stat('check', stats.enrollments, 'записей на курсы') }}
+  {{ stat('task', stats.submissions, 'сдано работ') }}
+  {{ stat('clock', stats.pending, 'ждут проверки', 'warn') }}
+</div>
+<div class="grid grid-2" style="margin-top:18px">
+  <section class="card"><div class="card-head"><h2>Оценки по платформе</h2></div>{{ chart }}</section>
+  <section class="card">
+    <div class="card-head"><h2>Популярные курсы</h2><a href="{{ url_for('admin.courses') }}">Все курсы</a></div>
+    <ul class="list">
+      {% for c in top_courses %}<li><div class="grow"><b>{{ c.title }}</b><span class="small muted">{{ c.teacher_name }}</span></div><span class="badge level plain">{{ c.students }} {{ c.students|plural('студент', 'студента', 'студентов') }}</span></li>
+      {% else %}<li class="muted">Курсов пока нет.</li>{% endfor %}
+    </ul>
+  </section>
+</div>
+<section class="card" style="margin-top:18px">
+  <div class="card-head"><h2>Новые пользователи</h2><a href="{{ url_for('admin.users') }}">Все пользователи</a></div>
+  <ul class="list">
+    {% for u in recent_users %}
+    <li><div class="person"><span class="avatar">{{ u.full_name|initials }}</span><div><b>{{ u.full_name }}</b><span>{{ u.email }}</span></div></div>
+      <span class="small muted">{{ u.created_at|dt }}</span></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% from "_m.html" import badge, score, code_view, csrf with context %}
+{% block title %}Проверка: {{ sub.assignment_title }}{% endblock %}
+{% block content %}
+<div class="crumbs"><a href="{{ url_for('teacher.reviews') }}">Проверка работ</a> / <span>{{ sub.student_name }}</span></div>
+<div class="page-head">
+  <div><h1>{{ sub.assignment_title }}</h1>
+    <p class="sub">{{ sub.course_title }} · {{ sub.student_name }} ({{ sub.student_email }}){% if sub.due_date %} · срок {{ sub.due_date|dateru }}{% endif %}</p></div>
+  <div class="actions">{{ badge(sub.status) }}{% if sub.status == 'checked' %}{{ score(sub.score) }}{% endif %}
+    <a class="btn btn-ghost" href="{{ url_for('teacher.student_detail', course_id=sub.course_id, student_id=sub.student_id) }}">Профиль студента</a></div>
+</div>
+
+<div class="split">
+  <div class="stack">
+    <section class="card">
+      <h2>Условие задания</h2>
+      <div class="prose">{{ sub.description_md|md or '<p class="muted">Описание не добавлено.</p>'|safe }}</div>
+    </section>
+    <section class="card">
+      <h2>Работа студента</h2>
+      <div class="thread">
+      {% for t in attempts %}
+        <div class="msg">
+          <div class="msg-head"><span><b>Попытка {{ t.attempt }}</b>{% if t.id == sub.id %} · открыта{% endif %}</span>
+            <span>{{ t.submitted_at|dt }}{% if sub.due_date and t.submitted_at[:10] > sub.due_date %} · <b style="color:var(--bad)">с опозданием</b>{% endif %}</span></div>
+          {% if t.answer_text %}<div class="answer-text">{{ t.answer_text }}</div>{% endif %}
+          {% if t.code %}{{ code_view(t.code, 'text', 'Решение студента') }}{% endif %}
+        </div>
+        {% if t.status != 'review' %}
+        <div class="msg teacher {{ t.status }}">
+          <div class="msg-head"><span><b>Ваш отзыв</b> · {{ t.reviewed_at|dt }}</span><span>{{ badge(t.status) }} {% if t.status == 'checked' %}{{ score(t.score) }}{% endif %}</span></div>
+          <div class="answer-text">{{ t.teacher_comment or 'Без комментария.' }}</div>
+        </div>
+        {% endif %}
+      {% endfor %}
+      </div>
+    </section>
+  </div>
+
+  <div>
+    {% if editable and is_latest %}
+    <form class="card" method="post" style="position:sticky;top:18px">
+      {{ csrf() }}
+      <h2>{{ 'Изменить оценку' if sub.status == 'checked' else 'Оценка' }}</h2>
+      <div class="field">
+        <span class="label" id="score-label">Оценка от 1 до 10</span>
+        <div class="score-pick" role="radiogroup" aria-labelledby="score-label">
+          {% for i in range(1, 11) %}<label><input type="radio" name="score" value="{{ i }}" {{ 'checked' if sub.score == i }}><span>{{ i }}</span></label>{% endfor %}
+        </div>
+      </div>
+      <div class="field"><label for="comment">Комментарий и рекомендации</label>
+        <textarea id="comment" name="comment" rows="6" maxlength="5000" placeholder="Что получилось хорошо, что стоит улучшить">{{ sub.teacher_comment }}</textarea>
+        <div class="hint">При возврате на доработку комментарий обязателен.</div></div>
+      <div class="decision">
+        <label><input type="radio" name="decision" value="accept" checked><b>Принять работу</b><div class="small muted">Оценка попадёт в успеваемость</div></label>
+        <label><input type="radio" name="decision" value="revision"><b>Вернуть на доработку</b><div class="small muted">Студент исправит и отправит снова</div></label>
+      </div>
+      <button class="btn btn-block" type="submit">Отправить результат</button>
+    </form>
+    {% elif sub.status == 'revision' %}
+    <section class="card"><h2>Ожидание студента</h2><p class="muted">Работа возвращена на доработку. Когда студент отправит исправленную версию, она появится в очереди проверки.</p></section>
+    {% else %}
+    <section class="card"><h2>Это не последняя попытка</h2><p class="muted">Оценивается только самая свежая версия работы.</p>
+      {% if attempts %}<a class="btn btn-ghost" href="{{ url_for('teacher.review', submission_id=attempts[-1].id) }}">Открыть последнюю</a>{% endif %}</section>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

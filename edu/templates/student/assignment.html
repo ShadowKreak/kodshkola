@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% from "_m.html" import badge, score, code_view, csrf with context %}
+{% block title %}{{ a.title }}{% endblock %}
+{% block content %}
+<div class="crumbs">
+  <a href="{{ url_for('student.my_courses') }}">Мои курсы</a> /
+  <a href="{{ url_for('student.course', course_id=a.course_id) }}">{{ a.course_title }}</a> /
+  <span>Задание</span>
+</div>
+<div class="page-head">
+  <div>
+    <h1>{{ a.title }}</h1>
+    <p class="sub">
+      {% if a.kind == 'final' %}Итоговый проект · {% endif %}
+      {% if a.due_date %}Срок сдачи: {{ a.due_date|dateru }}{% if overdue(a.due_date) and status in ('not_started', 'revision') %} · <b style="color:var(--bad)">срок прошёл</b>{% endif %}{% else %}Без срока{% endif %}
+    </p>
+  </div>
+  <div class="actions">{{ badge(status) }}{% if latest and latest.status == 'checked' %}{{ score(latest.score) }}{% endif %}</div>
+</div>
+
+<div class="split">
+  <div class="stack">
+    <section class="card">
+      <h2>Условие</h2>
+      <div class="prose">{{ a.description_md|md or '<p class="muted">Описание не добавлено.</p>'|safe }}</div>
+    </section>
+
+    {% if attempts %}
+    <section class="card">
+      <h2>История работы</h2>
+      <div class="thread">
+        {% for t in attempts %}
+          <div class="msg">
+            <div class="msg-head"><span><b>Ваша попытка {{ t.attempt }}</b></span><span>{{ t.submitted_at|dt }}
+              {% if a.due_date and t.submitted_at[:10] > a.due_date %} · <b style="color:var(--bad)">с опозданием</b>{% endif %}</span></div>
+            {% if t.answer_text %}<div class="answer-text">{{ t.answer_text }}</div>{% endif %}
+            {% if t.code %}{{ code_view(t.code, 'text', 'Решение') }}{% endif %}
+          </div>
+          {% if t.status != 'review' %}
+          <div class="msg teacher {{ t.status }}">
+            <div class="msg-head"><span><b>Преподаватель</b> · {{ t.reviewed_at|dt }}</span>
+              <span>{{ badge(t.status) }} {% if t.status == 'checked' %}{{ score(t.score) }}{% endif %}</span></div>
+            {% if t.teacher_comment %}<div class="answer-text">{{ t.teacher_comment }}</div>{% else %}<span class="muted">Без комментария.</span>{% endif %}
+          </div>
+          {% endif %}
+        {% endfor %}
+        {% if latest and latest.status == 'review' %}
+          <div class="msg" style="border-style:dashed;background:#fffdf5"><span class="muted">Работа отправлена. Преподаватель проверит её и пришлёт уведомление.</span></div>
+        {% endif %}
+      </div>
+    </section>
+    {% endif %}
+  </div>
+
+  <div class="stack">
+    {% if can_submit %}
+    <form class="card" method="post" action="{{ url_for('student.submit', assignment_id=a.id) }}">
+      {{ csrf() }}
+      <h2>{{ 'Исправленное решение' if latest else 'Ваше решение' }}</h2>
+      {% if latest and latest.status == 'revision' %}<p class="small" style="color:var(--bad)">Преподаватель вернул работу на доработку — учтите комментарий слева и отправьте новую версию.</p>{% endif %}
+      <div class="field"><label for="answer_text">Пояснение (необязательно)</label>
+        <textarea id="answer_text" name="answer_text" rows="4" maxlength="20000" placeholder="Кратко опишите ход решения"></textarea></div>
+      <div class="field"><label for="code">Код решения</label>
+        <textarea id="code" name="code" class="code" rows="12" maxlength="20000" spellcheck="false" placeholder="# вставьте код сюда">{{ latest.code if latest and latest.status == 'revision' else '' }}</textarea>
+        <div class="hint">Клавиша Tab вставляет отступ.</div></div>
+      <button class="btn btn-block" type="submit">Отправить на проверку</button>
+    </form>
+    {% else %}
+    <section class="card">
+      <h2>Статус</h2>
+      {% if status == 'review' %}<p>Работа на проверке у преподавателя. Редактировать её до ответа нельзя.</p>
+      {% else %}<p>Работа принята: оценка <b>{{ latest.score }}</b> из 10. Результат добавлен в вашу успеваемость.</p>{% endif %}
+    </section>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "_m.html" import bar, score, empty with context %}
+{% block title %}Студенты курса{% endblock %}
+{% block content %}
+<div class="crumbs"><a href="{{ url_for('teacher.course_manage', course_id=course.id) }}">{{ course.title }}</a> / <span>Студенты</span></div>
+<div class="page-head"><div><h1>Студенты курса</h1><p class="sub">{{ students|length }} {{ students|length|plural('студент', 'студента', 'студентов') }} записано на «{{ course.title }}»</p></div>
+  <div class="actions"><a class="btn btn-ghost" href="{{ url_for('teacher.course_stats', course_id=course.id) }}">Общая статистика</a></div></div>
+<div class="card flush">
+{% if students %}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Студент</th><th style="min-width:180px">Прогресс</th><th class="num">Уроки</th><th class="num">Задания</th><th class="num">На проверке</th><th class="num">Ср. оценка</th><th></th></tr></thead>
+    <tbody>
+    {% for s in students %}{% set p = s.progress %}
+      <tr>
+        <td><div class="person"><span class="avatar">{{ s.user.full_name|initials }}</span><div><b>{{ s.user.full_name }}</b><span>{{ s.user.email }}</span></div></div></td>
+        <td><div class="progress-row">{{ bar(p.percent) }}<b>{{ p.percent }}%</b></div></td>
+        <td class="num">{{ p.lessons_done }}/{{ p.lessons_total }}</td>
+        <td class="num">{{ p.assignments_done }}/{{ p.assignments_total }}</td>
+        <td class="num">{{ p.on_review or '—' }}</td>
+        <td class="num">{{ p.avg_score if p.avg_score is not none else '—' }}</td>
+        <td><a class="btn btn-ghost btn-sm" href="{{ url_for('teacher.student_detail', course_id=course.id, student_id=s.user.id) }}">Подробнее</a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+{% else %}{{ empty('Пока никто не записан', 'Опубликуйте курс — студенты найдут его в каталоге.') }}{% endif %}
+</div>
+{% endblock %}

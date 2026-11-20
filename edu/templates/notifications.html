@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% from "_m.html" import empty, post_button with context %}
+{% block title %}Уведомления{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Уведомления</h1><p class="sub">Сдачи работ, оценки и комментарии преподавателей.</p></div>
+  {% if unread %}<div class="actions">{{ post_button(url_for('main.notifications_read_all'), 'Отметить все прочитанными') }}</div>{% endif %}
+</div>
+<div class="card flush">
+  {% for n in notifications %}
+    <a class="notif {{ 'unread' if not n.is_read }}" href="{{ url_for('main.notification_go', nid=n.id) }}">
+      <div style="flex:1"><div>{{ n.text }}</div><div class="small muted">{{ n.created_at|dt }}</div></div>
+    </a>
+  {% else %}
+    {{ empty('Уведомлений пока нет', 'Здесь появятся новости по вашим курсам и работам.') }}
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% from "_m.html" import badge, score, empty with context %}
+{% block title %}Проверка работ{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Проверка работ</h1><p class="sub">Работы студентов по вашим курсам.</p></div></div>
+
+<div class="tabs">
+  {% for key, label in [('review', 'На проверке'), ('revision', 'Требуются исправления'), ('checked', 'Проверено'), ('all', 'Все')] %}
+    <a href="{{ url_for('teacher.reviews', status=key, course=course_id) }}" class="{{ 'active' if status == key }}">{{ label }}{% if key != 'all' and counts.get(key) %} ({{ counts.get(key) }}){% endif %}</a>
+  {% endfor %}
+</div>
+<form method="get" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:end">
+  <input type="hidden" name="status" value="{{ status }}">
+  <div class="field" style="margin:0;min-width:240px"><label for="course">Курс</label>
+    <select id="course" name="course" onchange="this.form.submit()">
+      <option value="">Все курсы</option>
+      {% for c in my_courses %}<option value="{{ c.id }}" {{ 'selected' if course_id == c.id }}>{{ c.title }}</option>{% endfor %}
+    </select></div>
+  <noscript><button class="btn" type="submit">Применить</button></noscript>
+</form>
+
+<div class="card flush">
+{% if rows %}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Студент</th><th>Задание</th><th>Отправлено</th><th>Статус</th><th class="num">Оценка</th><th></th></tr></thead>
+    <tbody>
+    {% for s in rows %}
+      <tr>
+        <td><div class="person"><span class="avatar">{{ s.student_name|initials }}</span><div><b>{{ s.student_name }}</b></div></div></td>
+        <td>{{ s.assignment_title }}<div class="small muted">{{ s.course_title }}{% if s.attempt > 1 %} · попытка {{ s.attempt }}{% endif %}</div></td>
+        <td class="nowrap small">{{ s.submitted_at|dt }}</td>
+        <td>{{ badge(s.status) }}</td>
+        <td class="num">{{ score(s.score) if s.status == 'checked' else '—' }}</td>
+        <td><a class="btn {{ '' if s.status == 'review' else 'btn-ghost' }} btn-sm" href="{{ url_for('teacher.review', submission_id=s.id) }}">{{ 'Проверить' if s.status == 'review' else 'Открыть' }}</a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+{% else %}{{ empty('Здесь пока пусто', 'Работы с таким статусом не найдены.') }}{% endif %}
+</div>
+{% endblock %}

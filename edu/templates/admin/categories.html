@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% from "_m.html" import csrf, post_button, empty with context %}
+{% block title %}Категории{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Категории курсов</h1><p class="sub">По категориям студенты фильтруют каталог.</p></div></div>
+<div class="grid grid-2">
+  <section class="card">
+    <h2>Список категорий</h2>
+    <ul class="list">
+      {% for c in categories %}
+      <li>
+        <form method="post" action="{{ url_for('admin.category_rename', cat_id=c.id) }}" style="display:flex;gap:8px;flex:1;min-width:0">
+          {{ csrf() }}
+          <input type="text" name="name" value="{{ c.name }}" maxlength="40" aria-label="Название категории" style="min-height:36px">
+          <button class="btn btn-ghost btn-sm" type="submit">Сохранить</button>
+        </form>
+        <span class="small muted nowrap">{{ c.courses_count }} {{ c.courses_count|plural('курс', 'курса', 'курсов') }}</span>
+        {{ post_button(url_for('admin.category_delete', cat_id=c.id), 'Удалить', 'btn btn-danger-ghost btn-sm', confirm='Удалить категорию «' ~ c.name ~ '»? Курсы останутся без категории.') }}
+      </li>
+      {% else %}<li class="muted">Категорий пока нет.</li>{% endfor %}
+    </ul>
+  </section>
+  <form class="card" method="post">
+    {{ csrf() }}
+    <h2>Новая категория</h2>
+    <div class="field"><label for="name">Название</label><input id="name" name="name" type="text" maxlength="40" placeholder="Например, Веб-разработка" required></div>
+    <button class="btn" type="submit">Добавить</button>
+  </form>
+</div>
+{% endblock %}

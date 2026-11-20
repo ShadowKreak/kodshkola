@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% from "_m.html" import stat, bar, score, empty with context %}
+{% block title %}Успеваемость{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Успеваемость</h1><p class="sub">История оценок и прогресс по каждому курсу.</p></div></div>
+
+<div class="grid grid-stats">
+  {{ stat('star', ov.totals.avg if ov.totals.avg is not none else '—', 'средняя оценка') }}
+  {{ stat('task', ov.totals.assignments, 'заданий проверено', 'ok') }}
+  {{ stat('check', ov.totals.lessons, 'уроков изучено') }}
+  {{ stat('clock', ov.totals.review, 'на проверке', 'warn') }}
+</div>
+
+<div class="tabs" style="margin-top:20px">
+  <a href="{{ url_for('student.grades') }}" class="{{ 'active' if not course_id }}">Все курсы</a>
+  {% for it in ov['items'] %}<a href="{{ url_for('student.grades', course=it.course.id) }}" class="{{ 'active' if course_id == it.course.id }}">{{ it.course.title }}</a>{% endfor %}
+</div>
+
+<div class="grid grid-2">
+  <section class="card"><div class="card-head"><h2>График оценок</h2></div>{{ chart }}</section>
+  <section class="card">
+    <div class="card-head"><h2>Прогресс по курсам</h2></div>
+    {% for it in ov['items'] %}
+      <div style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;gap:10px"><b>{{ it.course.title }}</b><span>{{ it.progress.percent }}%</span></div>
+        {{ bar(it.progress.percent) }}
+        <div class="small muted" style="margin-top:4px">Уроков {{ it.progress.lessons_done }}/{{ it.progress.lessons_total }} · Заданий {{ it.progress.assignments_done }}/{{ it.progress.assignments_total }} · На проверке {{ it.progress.on_review }} · Средняя {{ it.progress.avg_score if it.progress.avg_score is not none else '—' }}</div>
+      </div>
+    {% else %}
+      {{ empty('Нет курсов', 'Запишитесь на курс, чтобы видеть прогресс.') }}
+    {% endfor %}
+  </section>
+</div>
+
+<section class="card flush" style="margin-top:18px">
+  <div class="card-head" style="padding:18px 20px 0"><h2>История оценок</h2></div>
+  {% if history %}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Дата</th><th>Задание</th><th>Курс</th><th class="num">Попытка</th><th class="num">Оценка</th><th>Комментарий</th></tr></thead>
+    <tbody>
+    {% for h in history %}
+      <tr>
+        <td class="nowrap">{{ h.reviewed_at|dt }}</td>
+        <td><a href="{{ url_for('student.assignment', assignment_id=h.assignment_id) }}">{{ h.assignment_title }}</a></td>
+        <td>{{ h.course_title }}</td>
+        <td class="num">{{ h.attempt }}</td>
+        <td class="num">{{ score(h.score) }}</td>
+        <td class="small">{{ h.teacher_comment or '—' }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}{{ empty('Проверенных работ пока нет', 'Оценки появятся после проверки заданий преподавателем.') }}{% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% from "_m.html" import cover, empty with context %}
+{% block title %}Мои курсы{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Мои курсы</h1><p class="sub">Создавайте курсы, наполняйте их уроками и заданиями.</p></div>
+  <div class="actions"><a class="btn" href="{{ url_for('teacher.course_new') }}">Создать курс</a></div></div>
+{% if courses %}
+<div class="grid grid-3">
+  {% for c in courses %}
+  <article class="course-card">
+    {% call cover(c) %}<span class="badge plain">{{ 'Опубликован' if c.is_published else 'Черновик' }}</span>{% endcall %}
+    <div class="course-body">
+      <h3><a href="{{ url_for('teacher.course_manage', course_id=c.id) }}">{{ c.title }}</a></h3>
+      <div class="course-meta"><span>{{ LEVELS[c.level] }}</span>{% if c.category_name %}<span>{{ c.category_name }}</span>{% endif %}</div>
+      <div class="course-meta"><span>{{ c.lessons_count }} {{ c.lessons_count|plural('урок', 'урока', 'уроков') }}</span><span>{{ c.assignments_count }} {{ c.assignments_count|plural('задание', 'задания', 'заданий') }}</span><span>{{ c.students }} {{ c.students|plural('студент', 'студента', 'студентов') }}</span></div>
+      <div class="course-foot">
+        <a class="btn btn-sm" href="{{ url_for('teacher.course_manage', course_id=c.id) }}">Редактировать</a>
+        <a class="btn btn-ghost btn-sm" href="{{ url_for('teacher.course_students', course_id=c.id) }}">Студенты</a>
+      </div>
+    </div>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card">{{ empty('Вы ещё не создали ни одного курса', 'Начните с названия и описания — разделы и уроки можно добавить позже.', url_for('teacher.course_new'), 'Создать курс') }}</div>
+{% endif %}
+{% endblock %}

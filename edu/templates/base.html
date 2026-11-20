@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{% block title %}Главная{% endblock %} — KodShkola</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body>
+{% from "_m.html" import icon, flashes, csrf with context %}
+{% set ep = request.endpoint or '' %}
+{% set role = current_user['role'] %}
+<div class="app">
+  <aside class="sidebar" id="sidebar" aria-label="Навигация">
+    <a class="brand" href="{{ url_for('main.index') }}"><span class="brand-mark">&lt;/&gt;</span> KodShkola</a>
+    <nav class="nav">
+      {% if role == 'student' %}
+        <a href="{{ url_for('student.dashboard') }}" class="{{ 'active' if ep == 'student.dashboard' }}">{{ icon('home') }} Главная</a>
+        <a href="{{ url_for('student.catalog') }}" class="{{ 'active' if ep == 'student.catalog' }}">{{ icon('grid') }} Каталог курсов</a>
+        <a href="{{ url_for('student.my_courses') }}" class="{{ 'active' if ep in ('student.my_courses', 'student.course', 'student.lesson', 'student.assignment') }}">{{ icon('book') }} Мои курсы</a>
+        <a href="{{ url_for('student.grades') }}" class="{{ 'active' if ep == 'student.grades' }}">{{ icon('chart') }} Успеваемость</a>
+      {% elif role == 'teacher' %}
+        <a href="{{ url_for('teacher.dashboard') }}" class="{{ 'active' if ep == 'teacher.dashboard' }}">{{ icon('home') }} Главная</a>
+        <a href="{{ url_for('teacher.courses') }}" class="{{ 'active' if ep.startswith('teacher.') and ep not in ('teacher.dashboard', 'teacher.reviews', 'teacher.review') }}">{{ icon('book') }} Мои курсы</a>
+        <a href="{{ url_for('teacher.reviews') }}" class="{{ 'active' if ep in ('teacher.reviews', 'teacher.review') }}">{{ icon('inbox') }} Проверка работ{% if nav_pending %}<span class="nav-count">{{ nav_pending }}</span>{% endif %}</a>
+      {% elif role == 'admin' %}
+        <a href="{{ url_for('admin.dashboard') }}" class="{{ 'active' if ep == 'admin.dashboard' }}">{{ icon('home') }} Обзор</a>
+        <a href="{{ url_for('admin.users') }}" class="{{ 'active' if ep == 'admin.users' }}">{{ icon('users') }} Пользователи</a>
+        <a href="{{ url_for('admin.courses') }}" class="{{ 'active' if ep == 'admin.courses' }}">{{ icon('book') }} Курсы</a>
+        <a href="{{ url_for('admin.categories') }}" class="{{ 'active' if ep == 'admin.categories' }}">{{ icon('tag') }} Категории</a>
+      {% endif %}
+      <div class="nav-title">Аккаунт</div>
+      <a href="{{ url_for('main.notifications') }}" class="{{ 'active' if ep == 'main.notifications' }}">{{ icon('bell') }} Уведомления{% if unread %}<span class="nav-count">{{ unread }}</span>{% endif %}</a>
+      <a href="{{ url_for('main.profile') }}" class="{{ 'active' if ep == 'main.profile' }}">{{ icon('user') }} Профиль</a>
+    </nav>
+    <div class="sidebar-user">
+      <a class="user-chip" href="{{ url_for('main.profile') }}">
+        <span class="avatar">{{ current_user['full_name']|initials }}</span>
+        <span><b>{{ current_user['full_name'] }}</b><span>{{ role_name }}</span></span>
+      </a>
+      <form method="post" action="{{ url_for('auth.logout') }}">{{ csrf() }}<button class="btn btn-ghost btn-sm" type="submit">Выйти</button></form>
+    </div>
+  </aside>
+  <div class="scrim"></div>
+  <div class="main">
+    <header class="topbar">
+      <button class="burger" type="button" data-nav-toggle aria-label="Открыть меню" aria-controls="sidebar">{{ icon('menu') }}</button>
+      <b>KodShkola</b>
+      <a class="avatar" href="{{ url_for('main.profile') }}" aria-label="Профиль">{{ current_user['full_name']|initials }}</a>
+    </header>
+    <main class="content" id="content">
+      {{ flashes() }}
+      {% block content %}{% endblock %}
+    </main>
+    <footer class="app-footer">
+      <span>KodShkola — учебная платформа</span>
+      <span>Курсовая работа</span>
+    </footer>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

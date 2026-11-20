@@ -1,0 +1,15 @@
+{% extends "auth/base_auth.html" %}
+{% block title %}Вход{% endblock %}
+{% block content %}
+<h1>Вход в KodShkola</h1>
+<p class="muted">Введите e-mail и пароль, чтобы открыть личный кабинет.</p>
+<form method="post" class="card" novalidate>
+  {{ csrf() }}
+  <div class="field"><label for="email">Электронная почта</label>
+    <input id="email" name="email" type="email" value="{{ email }}" autocomplete="username" required autofocus></div>
+  <div class="field"><label for="password">Пароль</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" required></div>
+  <button class="btn btn-block" type="submit">Войти</button>
+</form>
+<p style="margin-top:16px">Нет аккаунта? <a href="{{ url_for('auth.register') }}">Зарегистрироваться</a></p>
+{% endblock %}
